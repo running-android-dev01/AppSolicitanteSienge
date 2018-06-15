@@ -1,17 +1,17 @@
 package com.bebsolutions.appsolicitantesienge;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import com.bebsolutions.appsolicitantesienge.model.Solicitacao;
@@ -26,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rcwSolicitacao;
     private TextView txtEmpty;
     private MainAdapter mainAdapter;
-    private List<Solicitacao> lSolicitacao;
-
 
 
     @Override
@@ -41,13 +39,11 @@ public class MainActivity extends AppCompatActivity {
         rcwSolicitacao = findViewById(R.id.rcwSolicitacao);
         txtEmpty = findViewById(R.id.txtEmpty);
 
-        FloatingActionButton fab =  findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(view -> {
+            Intent i = new Intent(MainActivity.this, CadastroActivity.class);
+            i.putExtra(CadastroActivity.PARAM_ID, "");
+            startActivity(i);
         });
 
         setupRecycler();
@@ -80,24 +76,21 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
 
-        return super.onOptionsItemSelected(item);
     }
 
 
-    private void carregarDados(){
-        try{
-            Dao<Solicitacao, Integer> solicitacaoDao = ((AplicationSolicitante)getApplicationContext()).getHelper().getSolicitacaoDao();
+    private void carregarDados() {
+        try {
+            Dao<Solicitacao, Integer> solicitacaoDao = ((AplicationSolicitante) getApplicationContext()).getHelper().getSolicitacaoDao();
 
-            lSolicitacao = solicitacaoDao.queryBuilder().orderBy("id", false).query();
+            List<Solicitacao> lSolicitacao = solicitacaoDao.queryBuilder().orderBy("id", false).query();
             mainAdapter.atualizarLista(lSolicitacao);
-            rcwSolicitacao.setVisibility(lSolicitacao.size()>0?View.VISIBLE:View.GONE);
-            txtEmpty.setVisibility(lSolicitacao.size()==0?View.VISIBLE:View.GONE);
+            rcwSolicitacao.setVisibility(lSolicitacao.size() > 0 ? View.VISIBLE : View.GONE);
+            txtEmpty.setVisibility(lSolicitacao.size() == 0 ? View.VISIBLE : View.GONE);
 
-        }catch (SQLException ex){
+        } catch (SQLException ex) {
             Log.e(TAG, "ERRO = ", ex);
         }
     }

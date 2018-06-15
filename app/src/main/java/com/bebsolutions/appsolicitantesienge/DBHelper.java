@@ -11,6 +11,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class DBHelper extends OrmLiteSqliteOpenHelper {
     private static final String TAG = DBHelper.class.getName();
@@ -21,7 +22,7 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
     private Dao<Solicitacao, Integer> solicitacaoDao = null;
 
     public DBHelper(Context context) {
-        super(context, context.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, Objects.requireNonNull(context.getExternalFilesDir(null)).getAbsolutePath() + "/" + DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override

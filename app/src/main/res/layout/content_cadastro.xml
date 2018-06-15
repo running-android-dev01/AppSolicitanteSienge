@@ -4,25 +4,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginStart="@dimen/activity_horizontal_margin"
+    android:layout_marginTop="@dimen/activity_vertical_margin"
+    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+    android:layout_marginBottom="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".CadastroActivity"
     tools:showIn="@layout/activity_cadastro">
 
     <!--  Email Label -->
     <android.support.design.widget.TextInputLayout
+        android:id="@+id/txtSolicitante"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <EditText android:id="@+id/edtSolicitante"
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/edtSolicitante"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:hint="@string/requester"
             android:inputType="text"
-            android:hint="Solicitacao"
             tools:ignore="Autofill" />
     </android.support.design.widget.TextInputLayout>
 
@@ -33,10 +39,10 @@
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:padding="12dp"
-        android:text="Gravar"
-        app:layout_constraintTop_toBottomOf="@id/edtSolicitante"
+        android:text="@string/record"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/txtSolicitante" />
 
 
 </android.support.constraint.ConstraintLayout>

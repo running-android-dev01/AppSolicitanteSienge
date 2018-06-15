@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginStart="@dimen/activity_horizontal_margin"
+    android:layout_marginTop="@dimen/activity_vertical_margin"
+    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+    android:layout_marginBottom="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
@@ -14,17 +17,15 @@
         android:id="@+id/rcwSolicitacao"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:listitem="@layout/activity_main"
-        />
+        tools:listitem="@layout/activity_main" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/txtEmpty"
         style="@style/TextAppearance.AppCompat.Medium"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Nenhuma solicitacao"
         android:gravity="center"
-        />
+        android:text="@string/no_request" />
 
 
 </android.support.constraint.ConstraintLayout>

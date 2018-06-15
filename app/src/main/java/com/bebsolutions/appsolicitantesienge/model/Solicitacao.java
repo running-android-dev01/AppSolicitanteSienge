@@ -3,7 +3,7 @@ package com.bebsolutions.appsolicitantesienge.model;
 import com.j256.ormlite.field.DatabaseField;
 
 public class Solicitacao {
-    @DatabaseField(id = true, generatedId = false)
+    @DatabaseField(id = true)
     public String id;
 
     @DatabaseField
