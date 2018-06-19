@@ -30,19 +30,18 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.bebsolutions.appsolicitantesienge.model.Solicitacao;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.j256.ormlite.dao.Dao;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -59,7 +58,7 @@ public class CadastroActivity extends AppCompatActivity {
     private Uri fileUri;
     private String imageStringBase64 = "";
 
-    private DatabaseReference mDatabase;
+    private FirebaseFirestore db;
     private static final String TAG = MainActivity.class.getName();
 
     public static final String PARAM_ID = TAG + ".ID";
@@ -82,12 +81,6 @@ public class CadastroActivity extends AppCompatActivity {
                 edtSolicitante.setError("Informar o solicitante!");
                 return;
             }
-            //Dao<Solicitacao, Integer> solicitacaoDao = ((AplicationSolicitante) getApplicationContext()).getHelper().getSolicitacaoDao();
-            //Solicitacao solicitacao = solicitacaoDao.queryBuilder().where().eq("id", id).queryForFirst();
-            if (TextUtils.isEmpty(solicitacao.id)) {
-                String key = mDatabase.child("solicitacao").push().getKey();
-                solicitacao.id = key;
-            }
 
             solicitacao.solicitanteAuth = "";
             solicitacao.solicitante = edtSolicitante.getText().toString();
@@ -100,13 +93,28 @@ public class CadastroActivity extends AppCompatActivity {
             solicitacao.solicitacaoStatus = "";
             solicitacao.solicitacaoStatusDescricao = "";
 
-
-            Map<String, Object> childUpdates = new HashMap<>();
             Map<String, Object> postValues = solicitacao.toMap();
-            childUpdates.put("/solicitacao/" + solicitacao.id, postValues);
-            mDatabase.updateChildren(childUpdates);
 
-            finish();
+            if (TextUtils.isEmpty(solicitacao.id)){
+                db.collection("solicitacao")
+                        .add(postValues)
+                        .addOnSuccessListener(documentReference -> {
+                            solicitacao.id = documentReference.getId();
+                            Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.w(TAG, "Error adding document", e);
+                            finish();
+                        });
+            }else{
+                DocumentReference solic = db.collection("solicitacao").document(solicitacao.id);
+                solic.update(postValues)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "Updated Successfully") ;
+                            finish();
+                        });
+            }
         }
     };
 
@@ -119,7 +127,7 @@ public class CadastroActivity extends AppCompatActivity {
         toolbar.setTitle(getString(R.string.app_name));
         setSupportActionBar(toolbar);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        db = FirebaseFirestore.getInstance();
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -159,41 +167,17 @@ public class CadastroActivity extends AppCompatActivity {
     }
 
     private void carregarDados() {
-        Query myTopPostsQuery = mDatabase.child("solicitacao").child(solicitacao.id);
-        myTopPostsQuery.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Log.d(TAG, "onChildAdded");
-                atualizar(dataSnapshot);
-            }
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Log.d(TAG, "onChildChanged");
-                atualizar(dataSnapshot);
-            }
+        if (!TextUtils.isEmpty(solicitacao.id)){
+            DocumentReference docRef = db.collection("solicitacao").document(solicitacao.id);
+            docRef.get().addOnSuccessListener(documentSnapshot -> {
+                solicitacao = documentSnapshot.toObject(Solicitacao.class);
+                Objects.requireNonNull(solicitacao).id = documentSnapshot.getId();
+                edtSolicitante.setText(solicitacao.solicitante);
+            });
+        }
 
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onChildRemoved");
-                finish();
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Log.d(TAG, "onChildMoved");
-                atualizar(dataSnapshot);
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d(TAG, "onCancelled");
-                finish();
-            }
-        });
     }
-
 
     private void atualizar(@NonNull DataSnapshot dataSnapshot){
         switch (dataSnapshot.getKey()){
@@ -410,5 +394,4 @@ public class CadastroActivity extends AppCompatActivity {
             }
         }
     }
-
 }
