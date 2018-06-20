@@ -14,10 +14,10 @@
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
         >
 
         <!--  Email Label -->
@@ -131,10 +131,6 @@
             android:text="Foto antes"
             android:layout_marginTop="8dp"/>
 
-
-
-
-
         <android.support.v7.widget.AppCompatImageButton
             android:id="@+id/btnFotoAntes"
             android:layout_width="match_parent"
@@ -144,6 +140,31 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txtImagemTitulo"
+            android:layout_marginBottom="8dp"
+            android:src="@drawable/ic_add_a_photo_black_200dp" />
+
+
+
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/txtImagemDepoisTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnFotoAntes"
+            style="@style/TextAppearance.AppCompat.Caption"
+            android:text="Foto Depois"
+            android:layout_marginTop="8dp"/>
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/btnFotoDepois"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txtImagemDepoisTitulo"
             android:layout_marginBottom="8dp"
             android:src="@drawable/ic_add_a_photo_black_200dp" />
 
@@ -158,7 +179,7 @@
             android:layout_marginBottom="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnFotoAntes">
+            app:layout_constraintTop_toBottomOf="@+id/btnFotoDepois">
 
             <android.support.v7.widget.AppCompatEditText
                 android:id="@+id/edtSolicitanteMelhorHorario"

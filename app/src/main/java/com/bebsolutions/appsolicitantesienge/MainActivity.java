@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.bebsolutions.appsolicitantesienge.model.Solicitacao;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView txtEmpty;
     private MainAdapter mainAdapter;
     private List<Solicitacao> lSolicitacao;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +94,19 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void carregarDados() {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        View content = getLayoutInflater().inflate(R.layout.dialog_progress, null);
+        final TextView mensagem = content.findViewById(R.id.mensagem);
+
+        mensagem.setText("Carregando...");
+        final AlertDialog dialogProgress = new android.support.v7.app.AlertDialog.Builder(this)
+                .setView(content)
+                .setCancelable(false)
+                .create();
+
+        dialogProgress.show();
+
+
         lSolicitacao = new ArrayList<>();
         rcwSolicitacao.setVisibility(lSolicitacao.size() > 0 ? View.VISIBLE : View.GONE);
         txtEmpty.setVisibility(lSolicitacao.size() == 0 ? View.VISIBLE : View.GONE);
@@ -113,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Log.d(TAG, "Error getting documents: ", task.getException());
                     }
+                    dialogProgress.dismiss();
                 });
     }
 
