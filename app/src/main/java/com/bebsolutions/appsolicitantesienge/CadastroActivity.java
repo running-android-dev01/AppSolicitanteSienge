@@ -353,8 +353,7 @@ public class CadastroActivity extends AppCompatActivity {
             StorageReference spaceRefAntes = storageRef.child(solicitacao.id + "/antes.jpg");
             StorageReference spaceRefDepois = storageRef.child(solicitacao.id + "/depois.jpg");
 
-            final long ONE_MEGABYTE = (1024 * 1024)*10;
-            spaceRefAntes.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            spaceRefAntes.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
                 @Override
                 public void onSuccess(byte[] bytes) {
                     Bitmap bmp=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
@@ -363,14 +362,13 @@ public class CadastroActivity extends AppCompatActivity {
             });
 
 
-            spaceRefDepois.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            spaceRefDepois.getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
                 @Override
                 public void onSuccess(byte[] bytes) {
                     Bitmap bmp=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
                     btnFotoDepois.setImageBitmap(bmp);
                 }
             });
-
         }
 
     }
