@@ -17,7 +17,9 @@ public class Solicitacao {
 
     public String descricao;
 
-    public String fotografia;
+    public String fotografiaAntes;
+
+    public String fotografiaDepois;
 
     public String melhorHorario;
 
@@ -32,7 +34,8 @@ public class Solicitacao {
         map.put("solicitanteTelefone", solicitanteTelefone);
         map.put("solicitanteData", solicitanteData);
         map.put("descricao", descricao);
-        map.put("fotografia", fotografia);
+        map.put("fotografiaAntes", fotografiaAntes);
+        map.put("fotografiaDepois", fotografiaDepois);
         map.put("melhorHorario", melhorHorario);
         map.put("solicitacaoStatus", solicitacaoStatus);
         map.put("solicitacaoStatusDescricao", solicitacaoStatusDescricao);

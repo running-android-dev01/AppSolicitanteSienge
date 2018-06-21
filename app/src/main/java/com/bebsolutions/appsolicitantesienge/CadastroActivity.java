@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,7 +14,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -36,14 +36,15 @@ import com.bebsolutions.appsolicitantesienge.model.Solicitacao;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.HashMap;
+
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.Map;
 import java.util.Objects;
@@ -63,16 +64,11 @@ public class CadastroActivity extends AppCompatActivity {
     private static final int LER_EXTERNO_PERMISSAO_DEPOIS = 7;
     private static final int ESCREVER_EXTERNO_PERMISSAO_DEPOIS = 8;
 
-    private String foto_nome_antes = "";
-    private Uri fileUriAntes;
-    private String imageAntesBase64 = "";
-
-
-    private String foto_nome_depois = "";
-    private Uri fileUriDepois;
-    private String imageDepoisBase64 = "";
+    private String foto_nome = "";
+    private Uri fileUri;
 
     private FirebaseFirestore db;
+    private FirebaseStorage storage;
     private static final String TAG = MainActivity.class.getName();
 
     public static final String PARAM_ID = TAG + ".ID";
@@ -103,7 +99,8 @@ public class CadastroActivity extends AppCompatActivity {
             solicitacao.solicitanteTelefone = edtSolicitanteTelefone.getText().toString();
             solicitacao.solicitanteData = edtSolicitanteData.getText().toString();
             solicitacao.descricao = edtSolicitanteDescricao.getText().toString();
-            solicitacao.fotografia = imageAntesBase64;
+            //solicitacao.fotografiaAntes = imageAntesBase64;
+            //solicitacao.fotografiaDepois = imageDepoisBase64;
             solicitacao.melhorHorario = edtSolicitanteMelhorHorario.getText().toString();
             solicitacao.solicitacaoStatus = "1";
             solicitacao.solicitacaoStatusDescricao = edtSolicitanteStatus.getText().toString();
@@ -129,8 +126,63 @@ public class CadastroActivity extends AppCompatActivity {
                         .addOnSuccessListener(documentReference -> {
                             solicitacao.id = documentReference.getId();
                             Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                            finish();
-                            dialogProgress.dismiss();
+
+                            StorageReference storageRef = storage.getReference();
+                            StorageReference spaceRef = storageRef.child(solicitacao.id + "/antes.jpg");
+
+                            btnFotoAntes.setDrawingCacheEnabled(true);
+                            btnFotoAntes.buildDrawingCache();
+                            if (btnFotoAntes.getDrawable() instanceof BitmapDrawable){
+                                Bitmap bitmap = ((BitmapDrawable) btnFotoAntes.getDrawable()).getBitmap();
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                byte[] data = baos.toByteArray();
+
+                                UploadTask uploadTask = spaceRef.putBytes(data);
+                                uploadTask.addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception exception) {
+                                        finish();
+                                        dialogProgress.dismiss();
+                                    }
+                                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                        StorageReference storageRef = storage.getReference();
+                                        StorageReference spaceRef = storageRef.child(solicitacao.id + "/depois.jpg");
+
+                                        btnFotoDepois.setDrawingCacheEnabled(true);
+                                        btnFotoDepois.buildDrawingCache();
+                                        if (btnFotoDepois.getDrawable() instanceof BitmapDrawable){
+                                            Bitmap bitmap = ((BitmapDrawable) btnFotoDepois.getDrawable()).getBitmap();
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                            byte[] data = baos.toByteArray();
+
+                                            UploadTask uploadTask = spaceRef.putBytes(data);
+                                            uploadTask.addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception exception) {
+                                                    finish();
+                                                    dialogProgress.dismiss();
+                                                }
+                                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                                @Override
+                                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                                    finish();
+                                                    dialogProgress.dismiss();
+                                                }
+                                            });
+                                        }else{
+                                            finish();
+                                            dialogProgress.dismiss();
+                                        }
+                                    }
+                                });
+                            }else{
+                                finish();
+                                dialogProgress.dismiss();
+                            }
                         })
                         .addOnFailureListener(e -> {
                             Log.w(TAG, "Error adding document", e);
@@ -141,9 +193,65 @@ public class CadastroActivity extends AppCompatActivity {
                 DocumentReference solic = db.collection("solicitacao").document(solicitacao.id);
                 solic.update(postValues)
                         .addOnSuccessListener(aVoid -> {
-                            Log.d(TAG, "Updated Successfully") ;
-                            finish();
-                            dialogProgress.dismiss();
+                            Log.d(TAG, "Updated Successfully");
+                                StorageReference storageRef = storage.getReference();
+                                StorageReference spaceRef = storageRef.child(solicitacao.id + "/antes.jpg");
+
+                                btnFotoAntes.setDrawingCacheEnabled(true);
+                                btnFotoAntes.buildDrawingCache();
+                                if (btnFotoAntes.getDrawable() instanceof BitmapDrawable){
+                                    Bitmap bitmap = ((BitmapDrawable) btnFotoAntes.getDrawable()).getBitmap();
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                    byte[] data = baos.toByteArray();
+
+                                    UploadTask uploadTask = spaceRef.putBytes(data);
+                                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception exception) {
+                                            finish();
+                                            dialogProgress.dismiss();
+                                        }
+                                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                                                StorageReference storageRef = storage.getReference();
+                                                StorageReference spaceRef = storageRef.child(solicitacao.id + "/depois.jpg");
+
+                                                btnFotoDepois.setDrawingCacheEnabled(true);
+                                                btnFotoDepois.buildDrawingCache();
+                                                if (btnFotoDepois.getDrawable() instanceof BitmapDrawable){
+                                                    Bitmap bitmap = ((BitmapDrawable) btnFotoDepois.getDrawable()).getBitmap();
+                                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                                    byte[] data = baos.toByteArray();
+
+                                                    UploadTask uploadTask = spaceRef.putBytes(data);
+                                                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                                                        @Override
+                                                        public void onFailure(@NonNull Exception exception) {
+                                                            finish();
+                                                            dialogProgress.dismiss();
+                                                        }
+                                                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                                        @Override
+                                                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                                            finish();
+                                                            dialogProgress.dismiss();
+                                                        }
+                                                    });
+                                                }else{
+                                                    finish();
+                                                    dialogProgress.dismiss();
+                                                }
+                                        }
+                                    });
+                                }else{
+                                    finish();
+                                    dialogProgress.dismiss();
+                                }
+
                         })
                         .addOnFailureListener(e -> {
                             finish();
@@ -163,6 +271,7 @@ public class CadastroActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance("gs://centralsiege-82896.appspot.com");
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -226,16 +335,42 @@ public class CadastroActivity extends AppCompatActivity {
                 edtSolicitanteTelefone.setText(solicitacao.solicitanteTelefone);
                 edtSolicitanteData.setText(solicitacao.solicitanteData);
                 edtSolicitanteDescricao.setText(solicitacao.descricao);
-                imageAntesBase64 = solicitacao.fotografia;
-                if (!TextUtils.isEmpty(imageAntesBase64)){
-                    byte[] imageAsBytes = Base64.decode(imageAntesBase64, Base64.DEFAULT);
+                if (!TextUtils.isEmpty(solicitacao.fotografiaAntes)){
+                    byte[] imageAsBytes = Base64.decode(solicitacao.fotografiaAntes, Base64.DEFAULT);
                     btnFotoAntes.setImageBitmap(BitmapFactory.decodeByteArray(imageAsBytes, 0, imageAsBytes.length));
+                }
+                if (!TextUtils.isEmpty(solicitacao.fotografiaDepois)){
+                    byte[] imageAsBytes = Base64.decode(solicitacao.fotografiaDepois, Base64.DEFAULT);
+                    btnFotoDepois.setImageBitmap(BitmapFactory.decodeByteArray(imageAsBytes, 0, imageAsBytes.length));
                 }
                 edtSolicitanteMelhorHorario.setText(solicitacao.melhorHorario);
                 edtSolicitanteStatus.setText(solicitacao.solicitacaoStatusDescricao);
 
                 dialogProgress.dismiss();
             });
+
+            StorageReference storageRef = storage.getReference();
+            StorageReference spaceRefAntes = storageRef.child(solicitacao.id + "/antes.jpg");
+            StorageReference spaceRefDepois = storageRef.child(solicitacao.id + "/depois.jpg");
+
+            final long ONE_MEGABYTE = (1024 * 1024)*10;
+            spaceRefAntes.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    Bitmap bmp=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                    btnFotoAntes.setImageBitmap(bmp);
+                }
+            });
+
+
+            spaceRefDepois.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    Bitmap bmp=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                    btnFotoDepois.setImageBitmap(bmp);
+                }
+            });
+
         }
 
     }
@@ -261,28 +396,24 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= 16) {
-            if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (!ActivityCompat.shouldShowRequestPermissionRationale(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    new android.support.v7.app.AlertDialog.Builder(Objects.requireNonNull(CadastroActivity.this))
-                            .setMessage("Permitir memoria?")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                Uri uri = Uri.fromParts("package", CadastroActivity.this.getPackageName(), null);
-                                intent.setData(uri);
-                                startActivityForResult(intent, LER_EXTERNO_PERMISSAO_ANTES);
-                            })
-                            .setNegativeButton("Cancelar", null)
-                            .create()
-                            .show();
-                    return;
-                }
-                ActivityCompat.requestPermissions(CadastroActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, LER_EXTERNO_PERMISSAO_ANTES);
+        if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                new android.support.v7.app.AlertDialog.Builder(Objects.requireNonNull(CadastroActivity.this))
+                        .setMessage("Permitir memoria?")
+                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            Uri uri = Uri.fromParts("package", CadastroActivity.this.getPackageName(), null);
+                            intent.setData(uri);
+                            startActivityForResult(intent, LER_EXTERNO_PERMISSAO_ANTES);
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .create()
+                        .show();
                 return;
             }
+            ActivityCompat.requestPermissions(CadastroActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, LER_EXTERNO_PERMISSAO_ANTES);
+            return;
         }
-
-
 
 
         if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -304,17 +435,17 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        foto_nome_antes = android.text.format.DateFormat.format("yyyyMMddhhmmss", new Date()).toString();
+        foto_nome = android.text.format.DateFormat.format("yyyyMMddhhmmss", new Date()).toString();
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            fileUriAntes = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+            fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUriAntes);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
         } else {
-            fileUriAntes = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+            fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 
-            File file = new File(fileUriAntes.getPath());
+            File file = new File(fileUri.getPath());
             Uri fileContent = FileProvider.getUriForFile(Objects.requireNonNull(CadastroActivity.this), "com.bebsolutions.appsolicitantesienge", file);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, fileContent);
         }
@@ -345,29 +476,24 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= 16) {
-            if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (!ActivityCompat.shouldShowRequestPermissionRationale(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    new android.support.v7.app.AlertDialog.Builder(Objects.requireNonNull(CadastroActivity.this))
-                            .setMessage("Permitir memoria?")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                Uri uri = Uri.fromParts("package", CadastroActivity.this.getPackageName(), null);
-                                intent.setData(uri);
-                                startActivityForResult(intent, LER_EXTERNO_PERMISSAO_DEPOIS);
-                            })
-                            .setNegativeButton("Cancelar", null)
-                            .create()
-                            .show();
-                    return;
-                }
-                ActivityCompat.requestPermissions(CadastroActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, LER_EXTERNO_PERMISSAO_DEPOIS);
+        if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(CadastroActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                new android.support.v7.app.AlertDialog.Builder(Objects.requireNonNull(CadastroActivity.this))
+                        .setMessage("Permitir memoria?")
+                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            Uri uri = Uri.fromParts("package", CadastroActivity.this.getPackageName(), null);
+                            intent.setData(uri);
+                            startActivityForResult(intent, LER_EXTERNO_PERMISSAO_DEPOIS);
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .create()
+                        .show();
                 return;
             }
+            ActivityCompat.requestPermissions(CadastroActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, LER_EXTERNO_PERMISSAO_DEPOIS);
+            return;
         }
-
-
-
 
         if (ContextCompat.checkSelfPermission(CadastroActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             if (!ActivityCompat.shouldShowRequestPermissionRationale(CadastroActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
@@ -388,17 +514,17 @@ public class CadastroActivity extends AppCompatActivity {
             return;
         }
 
-        foto_nome_depois = android.text.format.DateFormat.format("yyyyMMddhhmmss", new Date()).toString();
+        foto_nome = android.text.format.DateFormat.format("yyyyMMddhhmmss", new Date()).toString();
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            fileUriDepois = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+            fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUriDepois);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
         } else {
-            fileUriDepois = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+            fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
 
-            File file = new File(fileUriDepois.getPath());
+            File file = new File(fileUri.getPath());
             Uri fileContent = FileProvider.getUriForFile(Objects.requireNonNull(CadastroActivity.this), "com.bebsolutions.appsolicitantesienge", file);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, fileContent);
         }
@@ -443,10 +569,10 @@ public class CadastroActivity extends AppCompatActivity {
         File mediaFile;
         if (type == MEDIA_TYPE_IMAGE) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                    "IMG_" + foto_nome_antes + "_" + timeStamp + ".jpg");
+                    "IMG_" + foto_nome + "_" + timeStamp + ".jpg");
         } else if (type == MEDIA_TYPE_VIDEO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                    "VID_" + foto_nome_antes + "_" + timeStamp + ".mp4");
+                    "VID_" + foto_nome + "_" + timeStamp + ".mp4");
         } else {
             return null;
         }
@@ -509,18 +635,12 @@ public class CadastroActivity extends AppCompatActivity {
         if (requestCode == CAPTURAR_IMAGEM_ANTES) {
             if (resultCode == Activity.RESULT_OK) {
                 //Toast.makeText(getActivity(), "Image saved to:\n" + fileUri.getPath(), Toast.LENGTH_LONG).show();
-                File file = new File(fileUriAntes.getPath());
+                File file = new File(fileUri.getPath());
                 if (file.exists()) {
                     try {
 
-                        Bitmap bitmap = BitmapFactory.decodeFile(fileUriAntes.getPath());
-
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                        byte[] imageBytes = baos.toByteArray();
-                        imageAntesBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-                        btnFotoAntes.setImageBitmap(BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length));
+                        Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath());
+                        btnFotoAntes.setImageBitmap(bitmap);
 
                         file.delete();
                     } catch (Exception e) {
@@ -531,18 +651,12 @@ public class CadastroActivity extends AppCompatActivity {
         }else if (requestCode == CAPTURAR_IMAGEM_DEPOIS) {
             if (resultCode == Activity.RESULT_OK) {
                 //Toast.makeText(getActivity(), "Image saved to:\n" + fileUri.getPath(), Toast.LENGTH_LONG).show();
-                File file = new File(fileUriDepois.getPath());
+                File file = new File(fileUri.getPath());
                 if (file.exists()) {
                     try {
 
-                        Bitmap bitmap = BitmapFactory.decodeFile(fileUriDepois.getPath());
-
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                        byte[] imageBytes = baos.toByteArray();
-                        imageDepoisBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-                        btnFotoDepois.setImageBitmap(BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length));
+                        Bitmap bitmap = BitmapFactory.decodeFile(fileUri.getPath());
+                        btnFotoDepois.setImageBitmap(bitmap);
 
                         file.delete();
                     } catch (Exception e) {
